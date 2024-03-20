@@ -1,0 +1,19 @@
+.action-button-container{
+    display: flex;
+    justify-content: space-between;
+}
+.action-button-container button{
+    flex-grow: 1;
+}
+.actions{
+    width: 50px;
+}
+.modal{
+    display: block;
+}
+th button{
+    float: right;
+}
+.export{
+    width: 25px;
+}
