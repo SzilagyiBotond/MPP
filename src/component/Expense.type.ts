@@ -1,8 +1,10 @@
+import {Person} from "./Person.type.ts";
+
 export interface InterfaceExpense{
     id: string;
     name: string;
     price: number;
-    paid: string;
+    paid: Person;
     description: string;
     date: Date;
     currency: string;
@@ -21,4 +23,6 @@ export enum Pages{
     list,
     add,
     edit,
+    addPerson,
+    editPerson
 }

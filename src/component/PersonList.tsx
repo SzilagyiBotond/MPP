@@ -1,41 +1,41 @@
 import "../customBootstrap.scss";
-import {InterfaceExpense} from "./Expense.type";
 import "./ExpenseList.style.css"
-import ExpenseModal from "./ExpenseModal";
 import {useContext,  useState} from "react";
 import DeletePopUp from "./DeletePopUp.tsx";
 import ExportPopUp from "./ExportPopUp.tsx";
 import StackedDeletePopUp from "./StackedDeletePopUp.tsx";
-import {ExpenseContext} from "../ExpenseContext.tsx";
 import axios from "axios";
 import ServerErrorPopUp from "./ServerErrorPopUp.tsx";
+import {PersonContext} from "../PeopleContext.tsx";
+import {Person} from "./Person.type.ts";
+import PersonModal from "./PersonModal.tsx";
+import {ExpenseContext} from "../ExpenseContext.tsx";
 declare global {
     interface Navigator {
         msSaveBlob?: (blob: any, defaultName?: string) => boolean
     }
 }
 type Props = {
-    onDeleteClickHnd: (data: InterfaceExpense) => void;
-    onEdit: (data: InterfaceExpense) => void;
+    onDeleteClickHnd: (data: Person) => void;
+    onEdit: (data: Person) => void;
 };
-const ExpenseList = (props: Props) => {
+const PersonList = (props: Props) => {
+    const {persons,setPersons}=useContext(PersonContext);
     const {expenses,setExpenses}=useContext(ExpenseContext);
     const {onDeleteClickHnd,onEdit} = props;
     const [showModal,setShowModal] = useState(false);
-    const [dataToShow,setDataToShow] = useState(null as InterfaceExpense | null);
+    const [dataToShow,setDataToShow] = useState(null as Person | null);
     const [nameSort,setNameSort]=useState(false);
-    const [paidSort,setPaidSort]=useState(false);
-    const [priceSort,setPriceSort]=useState(false);
     const [showDelete,setShowDelete]=useState(false);
-    const [toDelete,setToDelete]= useState(null as InterfaceExpense|null);
-    const [toExport,setToExport]=useState([] as InterfaceExpense[]);
+    const [toDelete,setToDelete]= useState(null as Person|null);
+    const [toExport,setToExport]=useState([] as Person[]);
     const [errorExport,setErrorExport]=useState(false);
-    const [toDeleteList,setToDeleteList]=useState([] as InterfaceExpense[]);
+    const [toDeleteList,setToDeleteList]=useState([] as Person[]);
     const [errorDelete,setErrorDelete]=useState(false);
     const [serverError,setServerError]=useState(false);
     const [srvErrName,setSrvErrName]=useState("");
     const [srvErrMsg,setSrvErrMsg]=useState("");
-    const toCSV = (data:InterfaceExpense[]) =>{
+    const toCSV = (data:Person[]) =>{
         const header=Object.keys(data[0]);
         const csvContent=[
             header.join(','),
@@ -43,7 +43,7 @@ const ExpenseList = (props: Props) => {
         ].join('\n');
         return csvContent;
     }
-    const saveToCsv = (toExport : InterfaceExpense[])=>{
+    const saveToCsv = (toExport : Person[])=>{
         if (toExport.length===0){
             setErrorExport(true);
             return;
@@ -66,14 +66,14 @@ const ExpenseList = (props: Props) => {
             }
         }
     }
-    const deleteList = async (data: InterfaceExpense[]) => {
+    const deleteList = async (data: Person[]) => {
         if (data.length === 0) {
             setErrorDelete(true);
             return;
         }
         // const temp = [...expenses];
-        for (const expense of data) {
-            await axios.delete(`http://localhost:8080/expenses/${expense.id}`,{timeout: 1000}).then(response => console.log(response.data)).catch( function (error) {
+        for (const person of data) {
+            await axios.delete(`http://localhost:8080/persons/${person.id}`,{timeout: 1000}).then(response => console.log(response.data)).catch( function (error) {
                 const err=error.toJSON();
                 setSrvErrMsg(err.message);
                 setSrvErrName(err.name);
@@ -83,7 +83,14 @@ const ExpenseList = (props: Props) => {
             // if (index !== -1) {
             //     temp.splice(index, 1);
             // }
-            await axios.get(`http://localhost:8080/expenses`,{timeout: 1000}).then(response=>setExpenses(response.data)).catch( function (error) {
+            await axios.get("http://localhost:8080/expenses", {timeout: 1000}).then(response => {
+                setExpenses(response.data);
+            }).catch(function (error) {
+                console.log(error.toJSON());
+                // setSrvErrMsg(error.toJSON().message);
+                // setSrvErrName(error.toJSON().name);
+            });
+            await axios.get(`http://localhost:8080/persons`,{timeout: 1000}).then(response=>setPersons(response.data)).catch( function (error) {
                 const err=error.toJSON();
                 setSrvErrMsg(err.message);
                 setSrvErrName(err.name);
@@ -92,15 +99,15 @@ const ExpenseList = (props: Props) => {
         }
         // setExpenses(temp);
         setToDeleteList([]);
-        localStorage.setItem('list', JSON.stringify(expenses));
+        localStorage.setItem('personsList', JSON.stringify(persons));
     }
-    const commitDelete = (data:InterfaceExpense)=>{
+    const commitDelete = (data:Person)=>{
         deleteFromExport(data);
         deleteFromDelete(data);
         onDeleteClickHnd(data);
         setShowDelete(false);
     }
-    const deleteFromExport = (data:InterfaceExpense)=>{
+    const deleteFromExport = (data:Person)=>{
         const indexToDelete=toExport.indexOf(data);
         if (indexToDelete!==-1) {
             const tempList = [...toExport];
@@ -108,7 +115,7 @@ const ExpenseList = (props: Props) => {
             setToExport(tempList);
         }
     }
-    const deleteFromDelete = (data:InterfaceExpense)=>{
+    const deleteFromDelete = (data:Person)=>{
         const indexToDelete=toDeleteList.indexOf(data);
         if (indexToDelete!==-1) {
             const tempList = [...toDeleteList];
@@ -116,7 +123,7 @@ const ExpenseList = (props: Props) => {
             setToDeleteList(tempList);
         }
     }
-    const setExportState = (data:InterfaceExpense)=>{
+    const setExportState = (data:Person)=>{
         const indexExport=toExport.indexOf(data);
         if (indexExport!==-1){
             const tempList=[...toExport];
@@ -126,7 +133,7 @@ const ExpenseList = (props: Props) => {
             setToExport([...toExport,data]);
         }
     }
-    const setDeleteState = (data:InterfaceExpense)=>{
+    const setDeleteState = (data:Person)=>{
         const indexExport=toDeleteList.indexOf(data);
         if (indexExport!==-1){
             const tempList=[...toDeleteList];
@@ -138,50 +145,17 @@ const ExpenseList = (props: Props) => {
     }
     const sortName = () =>{
         if (!nameSort){
-            const temp=expenses.sort((a,b)=>(a.name<b.name ? 1:-1));
-            setExpenses(temp);
+            const temp=persons.sort((a,b)=>(a.name<b.name ? 1:-1));
+            setPersons(temp);
             setNameSort(true);
-            setPriceSort(false);
-            setPaidSort(false);
         }else{
-            const temp=expenses.sort((a,b)=>(a.name<b.name ? -1:1));
-            setExpenses(temp);
+            const temp=persons.sort((a,b)=>(a.name<b.name ? -1:1));
+            setPersons(temp);
             setNameSort(false);
-            setPriceSort(false);
-            setPaidSort(false);
         }
     }
-    const sortPaid = () =>{
-        if (!paidSort){
-            const temp=expenses.sort((a,b)=>(a.paid<b.paid ? 1:-1));
-            setExpenses(temp);
-            setPaidSort(true);
-            setNameSort(false);
-            setPriceSort(false);
-        }else{
-            const temp=expenses.sort((a,b)=>(a.paid<b.paid ? -1:1));
-            setExpenses(temp);
-            setPaidSort(false);
-            setNameSort(false);
-            setPriceSort(false);
-        }
-    }
-    const sortPrice = () =>{
-        if (!priceSort){
-            const temp=expenses.sort((a,b)=>(a.price<b.price ? 1:-1));
-            setExpenses(temp);
-            setPriceSort(true);
-            setNameSort(false);
-            setPaidSort(false);
-        }else{
-            const temp=expenses.sort((a,b)=>(a.price<b.price ? -1:1));
-            setExpenses(temp);
-            setPriceSort(false);
-            setNameSort(false);
-            setPaidSort(false);
-        }
-    }
-    const viewExpense = (data:InterfaceExpense) =>{
+
+    const viewPerson = (data:Person) =>{
         setDataToShow(data);
         setShowModal(true);
     }
@@ -198,29 +172,25 @@ const ExpenseList = (props: Props) => {
                     <tr>
                         <th>Name <button type="button" className="btn btn-primary btn-sm"
                                          onClick={sortName}>{nameSort ? '▲' : '▼'}</button></th>
-                        <th>Paid by <button type="button" className="btn btn-primary btn-sm"
-                                            onClick={sortPaid}>{paidSort ? '▲' : '▼'}</button></th>
-                        <th>Price <button type="button" className="btn btn-primary btn-sm"
-                                          onClick={sortPrice}>{priceSort ? '▲' : '▼'}</button></th>
-                        <th>Currency</th>
+                        <th>Status</th>
+                        <th>Revolut</th>
                         <th className="actions">Actions</th>
                         <th className="export">Export</th>
                         <th className="export">Delete</th>
                     </tr>
                     </thead>
-                    {expenses.map((expense) => {
+                    {persons.map((person) => {
                         return (
-                            <tr key={expense.id}>
-                                <td>{expense.name}</td>
-                                <td>{expense.paid.name}</td>
-                                <td>{expense.price}</td>
-                                <td>{expense.currency}</td>
+                            <tr key={person.id}>
+                                <td>{person.name}</td>
+                                <td>{person.status}</td>
+                                <td>{person.revolutId}</td>
                                 <td>
                                     <div className="action-button-container">
-                                        <input type="button" value="View" onClick={() => viewExpense(expense)}/>
-                                        <input type="button" value="Edit" onClick={() => onEdit(expense)}/>
+                                        <input type="button" value="View" onClick={() => viewPerson(person)}/>
+                                        <input type="button" value="Edit" onClick={() => onEdit(person)}/>
                                         <input type="button" value="Delete" onClick={() => {
-                                            setToDelete(expense);
+                                            setToDelete(person);
                                             setShowDelete(true);
                                             // onDeleteClickHnd(expense)
                                         }}/>
@@ -229,17 +199,17 @@ const ExpenseList = (props: Props) => {
                                 <td>
                                     <div className="btn-group" role="group"
                                          aria-label="Basic checkbox toggle button group">
-                                        <input type="checkbox" className="btn-check" id={expense.id}
-                                               onClick={() => setExportState(expense)} autoComplete="off"/>
-                                        <label className="btn btn-outline-primary" htmlFor={expense.id}>X</label>
+                                        <input type="checkbox" className="btn-check" id={person.id+"p"}
+                                               onClick={() => setExportState(person)} autoComplete="off"/>
+                                        <label className="btn btn-outline-primary" htmlFor={person.id+"p"}>X</label>
                                     </div>
                                 </td>
                                 <td>
                                     <div className="btn-group" role="group"
                                          aria-label="Basic checkbox toggle button group">
-                                        <input type="checkbox" className="btn-check" id={expense.id+"d"}
-                                               onClick={() => setDeleteState(expense)} autoComplete="off"/>
-                                        <label className="btn btn-outline-primary" htmlFor={expense.id+"d"}>X</label>
+                                        <input type="checkbox" className="btn-check" id={person.id+"pd"}
+                                               onClick={() => setDeleteState(person)} autoComplete="off"/>
+                                        <label className="btn btn-outline-primary" htmlFor={person.id+"pd"}>X</label>
                                     </div>
                                 </td>
                             </tr>
@@ -247,7 +217,7 @@ const ExpenseList = (props: Props) => {
                     })}
                 </table>
                 {showModal && dataToShow !== null &&
-                    <ExpenseModal onClose={() => setShowModal(false)} data={dataToShow}/>}
+                    <PersonModal onClose={() => setShowModal(false)} data={dataToShow}/>}
                 {showDelete && toDelete !== null && <DeletePopUp onClose={() => setShowDelete(false)} commit={() => {
                     commitDelete(toDelete)
                 }}/>}
@@ -260,4 +230,4 @@ const ExpenseList = (props: Props) => {
 
 };
 
-export default ExpenseList;
+export default PersonList;

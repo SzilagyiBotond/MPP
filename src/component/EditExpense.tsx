@@ -1,36 +1,63 @@
 import {InterfaceExpense} from "./Expense.type";
-import {useState} from "react";
+import {useContext, useState} from "react";
 import InvalidInputPopUp from "./InvalidInputPopUp.tsx";
+import axios from "axios";
+import {ExpenseContext} from "../ExpenseContext.tsx";
+import ServerErrorPopUp from "./ServerErrorPopUp.tsx";
+import {PersonContext} from "../PeopleContext.tsx";
 
 type Props = {
     data:InterfaceExpense;
     onBackBtnClickHnd: ()=> void;
-    onSubmitClickHnd: (data: InterfaceExpense)=>void;
 }
 const EditExpense = (props:Props) =>{
-    const {data,onBackBtnClickHnd,onSubmitClickHnd}=props;
+    const {expenses,setExpenses}=useContext(ExpenseContext);
+    const {persons,setPersons}=useContext(PersonContext);
+    const {data,onBackBtnClickHnd}=props;
     const [name,setName]=useState(data.name);
     const [price,setPrice]=useState(data.price);
-    const [paid,setPaid]=useState(data.paid);
+    const [paid,setPaid]=useState(data.paid.name);
     const [description,setDescription]=useState(data.description);
     const [date,setDate]=useState("");
     const [currency,setCurrency]=useState(data.currency);
     const [showPopup,setShowPopup]=useState(false);
-    const onSubmitBtnClickHnd = (e:any) =>{
+    const [serverError,setServerError]=useState(false);
+    const [srvErrName,setSrvErrName]=useState("");
+    const [srvErrMsg,setSrvErrMsg]=useState("");
+    const onSubmitBtnClickHnd = async (e: any) => {
         e.preventDefault();
-        if  (name!=="" && paid!=="" && date!==""){
-            const edited: InterfaceExpense ={
-                id: data.id,
-                name: name,
-                price: price,
-                paid: paid,
-                description: description,
-                date: new Date(date),
-                currency: currency
+        if (name !== "" && date !== "") {
+            const paid_field=persons.find(i=>i.name===paid);
+            console.log(paid_field);
+            if (paid_field===undefined){
+                setShowPopup(true);
+                return;
+            }else {
+                const edited: InterfaceExpense = {
+                    id: data.id,
+                    name: name,
+                    price: price,
+                    paid: paid_field,
+                    description: description,
+                    date: new Date(date),
+                    currency: currency
+                }
+
+                await axios.put(`http://localhost:8080/expenses/${data.id}`, edited, {timeout: 1000})
+                    .then((response) => {
+                        console.log(response.data);
+                        localStorage.setItem('list', JSON.stringify(expenses));
+                        // onSubmitClickHnd(data);
+                        onBackBtnClickHnd();
+                    })
+                    .catch(function (error) {
+                        const err = error.toJSON();
+                        setSrvErrMsg(err.message);
+                        setSrvErrName(err.name);
+                        setServerError(true);
+                    });
             }
-            onSubmitClickHnd(edited);
-            onBackBtnClickHnd();
-        }else{
+        } else {
             setShowPopup(true);
             return;
         }
@@ -74,6 +101,7 @@ const EditExpense = (props:Props) =>{
             </div>
         </form>
         {showPopup && <InvalidInputPopUp onClose={()=>setShowPopup(false)}/>}
+            {serverError && <ServerErrorPopUp message={srvErrMsg} name={srvErrName} onClose={()=>setServerError(false)}/>}
             </div>
     </>
 }
