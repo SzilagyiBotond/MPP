@@ -143,14 +143,26 @@ const PersonList = (props: Props) => {
             setToDeleteList([...toDeleteList,data]);
         }
     }
-    const sortName = () =>{
-        if (!nameSort){
-            const temp=persons.sort((a,b)=>(a.name<b.name ? 1:-1));
-            setPersons(temp);
+    const sortName = async () => {
+        if (!nameSort) {
+            //const temp=persons.sort((a,b)=>(a.name<b.name ? 1:-1));
+            //setPersons(temp);
+            await axios.get(`http://localhost:8080/persons?field=name`, {timeout: 1000}).then(response => setPersons(response.data)).catch(function (error) {
+                const err = error.toJSON();
+                setSrvErrMsg(err.message);
+                setSrvErrName(err.name);
+                setServerError(true);
+            });
             setNameSort(true);
-        }else{
-            const temp=persons.sort((a,b)=>(a.name<b.name ? -1:1));
-            setPersons(temp);
+        } else {
+            //const temp = persons.sort((a, b) => (a.name < b.name ? -1 : 1));
+            //setPersons(temp);
+            await axios.get(`http://localhost:8080/persons?field=name&order=desc`,{timeout: 1000}).then(response=>setPersons(response.data)).catch( function (error) {
+                const err=error.toJSON();
+                setSrvErrMsg(err.message);
+                setSrvErrName(err.name);
+                setServerError(true);
+            });
             setNameSort(false);
         }
     }
@@ -164,7 +176,7 @@ const PersonList = (props: Props) => {
             <input type="button" value="Export" className="add-button" onClick={() => saveToCsv(toExport)}/>
             <input type="button" value="Delete" className="add-button" onClick={() => deleteList(toDeleteList)}/>
             <div>
-                <h3>Expense list</h3>
+                <h3>Person list</h3>
             </div>
             <div>
                 <table className="table table-bordered border-primary">

@@ -136,16 +136,28 @@ const ExpenseList = (props: Props) => {
             setToDeleteList([...toDeleteList,data]);
         }
     }
-    const sortName = () =>{
-        if (!nameSort){
-            const temp=expenses.sort((a,b)=>(a.name<b.name ? 1:-1));
-            setExpenses(temp);
+    const sortName = async () => {
+        if (!nameSort) {
+            //const temp=expenses.sort((a,b)=>(a.name<b.name ? 1:-1));
+            await axios.get(`http://localhost:8080/expenses?field=name`, {timeout: 1000}).then(response => setExpenses(response.data)).catch(function (error) {
+                const err = error.toJSON();
+                setSrvErrMsg(err.message);
+                setSrvErrName(err.name);
+                setServerError(true);
+            });
+            //setExpenses(temp);
             setNameSort(true);
             setPriceSort(false);
             setPaidSort(false);
-        }else{
-            const temp=expenses.sort((a,b)=>(a.name<b.name ? -1:1));
-            setExpenses(temp);
+        } else {
+            //const temp = expenses.sort((a, b) => (a.name < b.name ? -1 : 1));
+            //setExpenses(temp);
+            await axios.get(`http://localhost:8080/expenses?field=name&order=desc`, {timeout: 1000}).then(response => setExpenses(response.data)).catch(function (error) {
+                const err = error.toJSON();
+                setSrvErrMsg(err.message);
+                setSrvErrName(err.name);
+                setServerError(true);
+            });
             setNameSort(false);
             setPriceSort(false);
             setPaidSort(false);
@@ -153,29 +165,41 @@ const ExpenseList = (props: Props) => {
     }
     const sortPaid = () =>{
         if (!paidSort){
-            const temp=expenses.sort((a,b)=>(a.paid<b.paid ? 1:-1));
+            const temp=expenses.sort((a,b)=>(a.paid.name<b.paid.name ? 1:-1));
             setExpenses(temp);
             setPaidSort(true);
             setNameSort(false);
             setPriceSort(false);
         }else{
-            const temp=expenses.sort((a,b)=>(a.paid<b.paid ? -1:1));
+            const temp=expenses.sort((a,b)=>(a.paid.name<b.paid.name ? -1:1));
             setExpenses(temp);
             setPaidSort(false);
             setNameSort(false);
             setPriceSort(false);
         }
     }
-    const sortPrice = () =>{
-        if (!priceSort){
-            const temp=expenses.sort((a,b)=>(a.price<b.price ? 1:-1));
-            setExpenses(temp);
+    const sortPrice = async () => {
+        if (!priceSort) {
+            //const temp=expenses.sort((a,b)=>(a.price<b.price ? 1:-1));
+            //setExpenses(temp);
+            await axios.get(`http://localhost:8080/expenses?field=price`, {timeout: 1000}).then(response => setExpenses(response.data)).catch(function (error) {
+                const err = error.toJSON();
+                setSrvErrMsg(err.message);
+                setSrvErrName(err.name);
+                setServerError(true);
+            });
             setPriceSort(true);
             setNameSort(false);
             setPaidSort(false);
-        }else{
-            const temp=expenses.sort((a,b)=>(a.price<b.price ? -1:1));
-            setExpenses(temp);
+        } else {
+            //const temp = expenses.sort((a, b) => (a.price < b.price ? -1 : 1));
+            //setExpenses(temp);
+            await axios.get(`http://localhost:8080/expenses?field=price&order=desc`, {timeout: 1000}).then(response => setExpenses(response.data)).catch(function (error) {
+                const err = error.toJSON();
+                setSrvErrMsg(err.message);
+                setSrvErrName(err.name);
+                setServerError(true);
+            });
             setPriceSort(false);
             setNameSort(false);
             setPaidSort(false);
